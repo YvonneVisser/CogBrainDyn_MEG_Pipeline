@@ -12,35 +12,44 @@ import mne
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
 
-import config
+from library.config import meg_dir, random_state, N_JOBS
 
 # Here we always process with the 1 Hz highpass data (instead of using
 # l_freq) because ICA needs a highpass.
 
 
-def run_ica(subject, tsss=None):
+def run_ica(subject_id, tsss=None):
+    subject = "sub%03d" % subject_id
     print("Processing subject: %s%s"
           % (subject, (' (tSSS=%d)' % tsss) if tsss else ''))
-    meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames = op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)
+    data_path = op.join(meg_dir, subject)
+    raws = list()
     print("  Loading runs")
-    raws = [mne.io.read_raw_fif(raw_fnames)]
-
+    
+    # XXX get the number of runs from the data
+    for run in range(1, 7): 
+        if tsss:
+            run_fname = op.join(data_path, 'run_%02d_filt_tsss_%d_raw.fif'
+                                % (run, tsss))
+        else:
+            run_fname = op.join(data_path, 'run_%02d_filt_sss_highpass-%sHz'
+                                '_raw.fif' % (run, 1))
+        raws.append(mne.io.read_raw_fif(run_fname))
     raw = mne.concatenate_raws(raws)
     # SSS reduces the data rank and the noise levels, so let's include
     # components based on a higher proportion of variance explained (0.999)
     # than we would otherwise do for non-Maxwell-filtered raw data (0.98)
-    n_components = 0.999  # XXX: This can bring troubles to ICA
+    n_components = 0.999
     if tsss:
-        ica_name = op.join(config.meg_dir, subject,
+        ica_name = op.join(meg_dir, subject,
                            'run_concat-tsss_%d-ica.fif' % tsss)
     else:
-        ica_name = op.join(config.meg_dir, subject, 'run_concat-ica.fif')
+        ica_name = op.join(meg_dir, subject, 'run_concat-ica.fif')
     # Here we only compute ICA for MEG because we only eliminate ECG artifacts,
     # which are not prevalent in EEG (blink artifacts are, but we will remove
     # trials with blinks at the epoching stage).
     print('  Fitting ICA')
-    ica = ICA(method='fastica', random_state=config.random_state,
+    ica = ICA(method='fastica', random_state=random_state,
               n_components=n_components)
     picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                            stim=False, exclude='bads')
@@ -52,7 +61,9 @@ def run_ica(subject, tsss=None):
 
 
 # Memory footprint: around n_jobs * 4 GB
-parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
-subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects
+parallel, run_func, _ = parallel_func(run_ica, n_jobs=N_JOBS)
+subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
 parallel(run_func(subject) for subject in subjects_iterable)
 
+# XXX what is this?
+parallel(run_func(3, tsss) for tsss in (10, 1))  # Maxwell filtered data

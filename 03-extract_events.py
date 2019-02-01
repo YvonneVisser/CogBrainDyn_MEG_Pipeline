@@ -17,9 +17,10 @@ import config
 
 def run_events(subject):
     print("processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_raw.fif' % subject)]
-    eve_fnames_out = [op.join(meg_subject_dir, '%s_audvis_filt-eve.fif' % subject)]
+    
+    meg_subject_dir = op.join(config.study_path, subject)
+    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
+    eve_fnames_out = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
 
     for raw_fname_in, eve_fname_out in zip(raw_fnames_in, eve_fnames_out):
         raw = mne.io.read_raw_fif(raw_fname_in)
@@ -28,6 +29,7 @@ def run_events(subject):
         print("subject: %s - file: %s" % (subject, raw_fname_in))
 
         mne.write_events(eve_fname_out, events)
+
 
 parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
 subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects

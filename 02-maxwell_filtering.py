@@ -30,10 +30,10 @@ import config
 def run_maxwell_filter(subject):
     print("processing subject: %s" % subject)
     # XXX : put the study-specific names in the config file
-    meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_raw.fif' % subject)]
+    meg_subject_dir = op.join(config.study_path, subject)
+    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
+    raw_fnames_out = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
 
-    raw_fnames_out = [op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)]
 
     # To match their processing, transform to the head position of the defined run
     info = mne.io.read_info(raw_fnames_in[config.mf_reference_run])

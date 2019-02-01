@@ -37,10 +37,9 @@ events_id = {
 def run_epochs(subject):
     print("Processing subject: %s" % subject)
 
-    meg_subject_dir = op.join(config.meg_dir, subject)
-
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)]
-    eve_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt-eve.fif' % subject)]
+    meg_subject_dir = op.join(config.study_path, subject)
+    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
+    eve_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
 
     raw_list = list()
     events_list = list()
@@ -73,7 +72,7 @@ def run_epochs(subject):
                         decim=config.decim, reject=config.reject)
 
     print('  Writing to disk')
-    epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
+    epochs.save(op.join(meg_subject_dir, '%s_filt_sss-epo.fif' % subject))
 
 
 ###############################################################################
