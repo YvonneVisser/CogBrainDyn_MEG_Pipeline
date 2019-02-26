@@ -1,0 +1,9 @@
+This is the new version, containing 2 extra aspects:
+
+ICA application, the components are not yet rejected
+Multiple block concatenation
+
+This code is not yet made specific for the timelimit experiment
+
+In the working version, all scripts run for the timelimit data, but it is missing the 2 extra aspects
+

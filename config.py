@@ -11,6 +11,12 @@ import os
 import numpy as np
 
 
+# let the scripts generate plots or not
+# execute %matplotlib qt in your command line once to show the figures in
+# separate windows
+
+plot = False
+
 ###############################################################################
 # DIRECTORIES
 # -----------
@@ -24,17 +30,22 @@ study_path = 'E:/Neurospin/TimeLimit/Data'
 #subjects_dir = os.path.join(study_path, 'subjects')
 #meg_dir = os.path.join(study_path, 'MEG')
 
+
 ###############################################################################
-# DEFINE SUBJECTS
+# SUBJECTS / RUNS
 # ---------------
 #
-# A list of ``subject names``
-# These are the ``nips`` in neurospin lingo
+# The MEG-data need to be stored in a folder
+# named my_study_path/MEG/my_subject/
 
-# XXX how to write this if we want to process only one subject?
-# subjects = 'sample'
+# This is the name of your experimnet
+study_name = 'timelimit'
 
-subjects = ['s03']
+# To define the subjects, we use a list with all the subject names. Even if its
+# a single subject, it needs to be set up as a list with a single element,
+# as in the example
+
+subjects_list = ['s03']
 '''
 # 's01, s02'
 # 's04, s05', 's06',
@@ -47,8 +58,18 @@ subjects = ['s03']
 # ``bad subjects``  that should not be included in the analysis
 exclude_subjects = {'subj01_noHPI'}
 
-# # ``bad subjects``  that should not be included in the analysis
-# exclude_subjects = {'subject_01', 'subject_09', 'subject_24'}
+# Define the names of your ``runs``
+# The naming should be consistant over subjects.
+# put the number of runs you ideally expect to have per subject
+# the scripts will issue a warning if there are less
+# leave empty if there is just one file
+runs = [''] # ['run01', 'run02']
+
+# This generates the name for all files
+# with the names specified above
+# normally you should not have to touch this
+
+base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 ###############################################################################
 # BAD CHANNELS
@@ -56,6 +77,7 @@ exclude_subjects = {'subj01_noHPI'}
 #
 # ``bad channels``, to be removed before maxfilter is applied
 # you either get them from your recording notes, or from visualizing the data
+# Use the simple dict if you don't have runs, and the dict(dict) if you have runs
 
 # subj01, 'MEG2217'
 
@@ -84,6 +106,9 @@ bads = dict(s03=['MEG0213', 'MEG1932', 'MEG1923', 'MEG1442'])
             subj21=[],
             subj22=[])
 '''
+
+# bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
+#                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -135,14 +160,13 @@ mf_head_origin = 'auto'
 mf_st_duration = None
 
 
-
 ###############################################################################
 # RESAMPLING
 # ----------
 #
 # ``resample_sfreq``  : a float that specifies at which sampling frequency
 # the data should be resampled. If None then no resampling will be done.
-resample_sfreq = 256.
+resample_sfreq = None
 
 
 # ``decim`` : integer that says how much to decimate data at the epochs level.
@@ -157,9 +181,14 @@ decim = 1
 #
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
+# If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
+# a value for the eog channel (see examples below).
 # **Note**: these numbers tend to vary between subjects.
-reject = {'mag':4e-12, 'grad':4000e-13 ,'eeg':150e-6}
+# Examples:
+# reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+# reject = None
 
+reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 
 ###############################################################################
 # EPOCHING
@@ -176,17 +205,43 @@ tmax = 1.
 
 baseline = (None, 0.)
 
+# stimulus channel, which contains the events
+stim_channel = None  # 'STI014'# 'STI101'
+
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
 
 event_id = {'2s': 2, '4s': 4, '8s': 8, '16s': 16, 'Inf': 32, 'Start': 1}
 conditions = ['2s', '4s', '8s', '16s', 'Inf', 'Start']
 
+
 ###############################################################################
-# ICA parameters
+# ICA PARAMETERS
 # --------------
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
+
+rejcomps_man = dict(sample=dict(meg=[],
+                                eeg=[]))
+
+
+###############################################################################
+# DECODING
+# --------------
+#
+# decoding_conditions should be a list of conditions to be classified.
+# For example 'Auditory' vs. 'Visual' as well as
+# 'Auditory/Left' vs 'Auditory/Right'
+decoding_conditions = [('Auditory/Left', 'Auditory/Right'),
+                       ('Auditory', 'Visual')]
+decoding_metric = 'roc_auc'
+decoding_n_splits = 5
+
+###############################################################################
+# TIME-FREQUENCY
+# --------------
+#
+time_frequency_conditions = ['Auditory/Left']
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS
