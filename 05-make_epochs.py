@@ -24,12 +24,12 @@ N_JOBS = max(config.N_JOBS // 4, 1)  # make less parallel runs to limit memory u
 ###############################################################################
 # We define the events and the onset and offset of the epochs
 
-events_id = {
-    'auditory/left': 1,
-    'auditory/right': 2,
-    'visual/left': 3,
-    'visual/right': 4,
-}
+#events_id = {
+#    'auditory/left': 1,
+#    'auditory/right': 2,
+#    'visual/left': 3,
+#    'visual/right': 4,
+#}
 
 
 ###############################################################################
@@ -38,8 +38,9 @@ def run_epochs(subject):
     print("Processing subject: %s" % subject)
 
     meg_subject_dir = op.join(config.study_path, subject)
-    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
-    eve_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
+
+    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01_maxfiltered.fif' % subject)]
+    eve_fnames_in = [op.join(meg_subject_dir, '%s-eve.fif' % subject)]
 
     raw_list = list()
     events_list = list()
@@ -58,8 +59,8 @@ def run_epochs(subject):
     raw.set_eeg_reference(projection=True)
     del raw_list
 
-    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=True,
-                           eog=True, exclude=())
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
+                           eog=False, exclude=())
 
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
@@ -68,11 +69,13 @@ def run_epochs(subject):
     # Epoch the data
     print('  Epoching')
     epochs = mne.Epochs(raw, events, config.event_id, config.tmin, config.tmax,
-                        proj=True, picks=picks, baseline=config.baseline, preload=False,
-                        decim=config.decim, reject=config.reject)
-
+                        proj=True, picks=picks, baseline=config.baseline, preload=True,
+                        decim=config.decim, reject=None)
+    
+    # epochs.plot()
+        
     print('  Writing to disk')
-    epochs.save(op.join(meg_subject_dir, '%s_filt_sss-epo.fif' % subject))
+    epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
 
 
 ###############################################################################

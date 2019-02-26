@@ -16,7 +16,7 @@ import config
 
 def run_evoked(subject):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    meg_subject_dir = op.join(config.study_path, subject)
     fname_epo = op.join(meg_subject_dir, '%s-epo.fif' % subject)
     fname_ave = op.join(meg_subject_dir, '%s-ave.fif' % subject)
 
@@ -28,6 +28,14 @@ def run_evoked(subject):
         evokeds.append(epochs[condition].average())
 
     mne.evoked.write_evokeds(fname_ave, evokeds)
+    
+    evoked_cond2 = evokeds[0]
+    evoked_cond4 = evokeds[1]
+    evoked_cond8 = evokeds[2]
+    evoked_cond16 = evokeds[3]
+    evoked_condInf = evokeds[4]
+    
+    fig = evoked_condInf.plot(exclude=(), time_unit='s')
 
 
 parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)

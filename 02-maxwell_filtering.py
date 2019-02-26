@@ -31,18 +31,18 @@ def run_maxwell_filter(subject):
     print("processing subject: %s" % subject)
     # XXX : put the study-specific names in the config file
     meg_subject_dir = op.join(config.study_path, subject)
-    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
-    raw_fnames_out = [op.join(meg_subject_dir, 'timelimit_%s_block01.fif' % subject)]
-
-
+    raw_fnames_in = [op.join(meg_subject_dir, 'timelimit_%s_block01_filtered.fif' % subject)]
+    raw_fnames_out = [op.join(meg_subject_dir, 'timelimit_%s_block01_maxfiltered.fif' % subject)]
+    
+    
     # To match their processing, transform to the head position of the defined run
     info = mne.io.read_info(raw_fnames_in[config.mf_reference_run])
     destination = info['dev_head_t']
-
+    
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
-        raw = mne.io.read_raw_fif(raw_fname_in)
-
-        print('    st_duration=%d' % (config.mf_st_duration,))
+        raw = mne.io.read_raw_fif(raw_fname_in, allow_maxshield=True)
+    
+        # print('    st_duration=%d' % (config.mf_st_duration,))
         raw_sss = mne.preprocessing.maxwell_filter(
             raw,
             calibration=config.mf_cal_fname,
@@ -50,11 +50,11 @@ def run_maxwell_filter(subject):
             st_duration=config.mf_st_duration,
             origin=config.mf_head_origin,
             destination=destination)
-
+    
         raw_sss.save(raw_fname_out, overwrite=True)
 
 
 parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
-
+#
 subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
 parallel(run_func(subject) for subject in subjects_iterable)
